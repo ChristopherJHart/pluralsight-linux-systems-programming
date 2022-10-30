@@ -53,7 +53,9 @@ int main(int argc, char *argv[])
         }
 
         // Display file access permissions
-        printf("Access permissions: %o\n", file_metadata->st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
+        printf(
+            "Access permissions: %o\n",
+            file_metadata->st_mode & (S_IRWXU | S_IRWXG | S_IRWXO));
 
         // Drill down owner, group, and other user permissions in user-friendly table.
         printf("\t\t\tRWX\n");
