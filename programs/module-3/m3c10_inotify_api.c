@@ -5,7 +5,7 @@
 #include <sys/inotify.h>
 #include <sys/stat.h>
 
-#define BUFFER_SIZE (250 * (sizeof(struct inotify_event) + NAME_MAX + 1))
+#define BUFFER_SIZE (250 * (sizeof(struct inotify_event)))
 
 int main(int argc, char *argv[])
 {
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
         int notify_fd, watch_fd;
-        char buffer[BUFFER_SIZE];
+        char event_buffer[BUFFER_SIZE];
         struct inotify_event *event;
 
         if ((notify_fd = inotify_init()) < 0)
@@ -48,8 +48,8 @@ int main(int argc, char *argv[])
 
         while (1)
         {
-            int bytes_read = read(notify_fd, buffer, BUFFER_SIZE);
-            for (char *data_read = buffer; data_read < buffer + bytes_read;)
+            int bytes_read = read(notify_fd, event_buffer, BUFFER_SIZE);
+            for (char *data_read = event_buffer; data_read < event_buffer + bytes_read;)
             {
                 event = (struct inotify_event *)data_read;
                 data_read += sizeof(struct inotify_event) + event->len;
