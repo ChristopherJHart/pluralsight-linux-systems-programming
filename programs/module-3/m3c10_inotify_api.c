@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
         }
 
         // Enter infinite loop, continuously reading from inotify event queue
+        printf("Monitoring directory %s for events\n", directory);
         char event_buffer[BUFFER_SIZE];
         struct inotify_event *event;
         while (1)
