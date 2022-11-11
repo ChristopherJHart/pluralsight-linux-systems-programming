@@ -69,19 +69,19 @@ int main(int argc, char *argv[])
                 data_read += sizeof(struct inotify_event) + event->len;
 
                 // Categorize event and print output to stdout accordingly
-                if (event->mask & IN_ACCESS)
+                if (event->mask == IN_ACCESS)
                 {
                     printf("File %s/%s was accessed.\n", directory, event->name);
                 }
-                if (event->mask & IN_CREATE)
+                if (event->mask == IN_CREATE)
                 {
                     printf("File %s/%s was created.\n", directory, event->name);
                 }
-                if (event->mask & IN_CLOSE_WRITE)
+                if (event->mask == IN_CLOSE_WRITE)
                 {
                     printf("File %s/%s was modified.\n", directory, event->name);
                 }
-                if (event->mask & IN_DELETE)
+                if (event->mask == IN_DELETE)
                 {
                     printf("File %s/%s was deleted.\n", directory, event->name);
                 }
