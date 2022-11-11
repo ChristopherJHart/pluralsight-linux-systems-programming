@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
 {
     if (argc == 2)
     {
+        // Fetch metadata for user-provided file/directory
         int ret;
         struct stat *file_metadata = malloc(sizeof(struct stat));
         if ((ret = stat(argv[1], file_metadata)) < 0)
@@ -18,6 +19,8 @@ int main(int argc, char *argv[])
             perror("Failed to retrieve metadata for file");
             exit(1);
         }
+
+        // Validate user-provided file/directory is indeed a file or directory
         int is_directory = (file_metadata->st_mode & S_IFMT) == S_IFDIR;
         int is_regular_file = (file_metadata->st_mode & S_IFMT) == S_IFREG;
         if (is_directory == 0 && is_regular_file == 0)
@@ -29,30 +32,36 @@ int main(int argc, char *argv[])
                 argv[1]);
             exit(1);
         }
-        int notify_fd, watch_fd;
-        char event_buffer[BUFFER_SIZE];
-        struct inotify_event *event;
 
+        // Initialize inotify API
+        int notify_fd;
         if ((notify_fd = inotify_init()) < 0)
         {
             perror("Failed to initialize inotify API");
             exit(1);
         }
 
+        // Add user-provided file/directory to inotify watchlist
         int events_mask = IN_ACCESS | IN_CREATE | IN_CLOSE_WRITE | IN_DELETE;
-        if ((watch_fd = inotify_add_watch(notify_fd, argv[1], events_mask)) < 0)
+        if ((inotify_add_watch(notify_fd, argv[1], events_mask)) < 0)
         {
             perror("Failed to watch directory for changes");
             exit(1);
         }
 
+        // Enter infinite loop, continuously reading from inotify file
+        char event_buffer[BUFFER_SIZE];
+        struct inotify_event *event;
         while (1)
         {
             int bytes_read = read(notify_fd, event_buffer, BUFFER_SIZE);
             for (char *data_read = event_buffer; data_read < event_buffer + bytes_read;)
             {
+                // Cast data read from inotify to an event structure
                 event = (struct inotify_event *)data_read;
                 data_read += sizeof(struct inotify_event) + event->len;
+
+                // Categorize event and print output to stdout accordingly
                 if (event->mask & IN_ACCESS)
                 {
                     printf("File /tmp/%s was accessed.\n", event->name);
