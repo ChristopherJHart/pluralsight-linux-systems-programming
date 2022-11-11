@@ -5,7 +5,7 @@
 #include <sys/inotify.h>
 #include <sys/stat.h>
 
-#define BUFFER_SIZE (250 * (sizeof(struct inotify_event)))
+#define BUFFER_SIZE (250 * (sizeof(struct inotify_event)) + NAME_MAX + 1)
 
 int main(int argc, char *argv[])
 {
