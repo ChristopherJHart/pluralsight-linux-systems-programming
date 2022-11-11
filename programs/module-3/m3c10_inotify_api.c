@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/inotify.h>
 #include <sys/stat.h>
 
@@ -11,7 +12,7 @@ int main(int argc, char *argv[])
 {
     if (argc == 2)
     {
-        // Fetch metadata for user-provided file/directory
+        // Fetch metadata for user-provided directory
         int ret;
         struct stat *file_metadata = malloc(sizeof(struct stat));
         if ((ret = stat(argv[1], file_metadata)) < 0)
@@ -20,17 +21,23 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
-        // Validate user-provided file/directory is indeed a file or directory
-        int is_directory = (file_metadata->st_mode & S_IFMT) == S_IFDIR;
-        int is_regular_file = (file_metadata->st_mode & S_IFMT) == S_IFREG;
-        if (is_directory == 0 && is_regular_file == 0)
+        // Validate user-provided directory is indeed a directory
+        if ((file_metadata->st_mode & S_IFMT) != S_IFDIR)
         {
             // Bail out if argument is not a directory.
             printf(
-                "Argument %s provided is not a regular file or directory. "
-                "Please provide a file or directory to monitor.\n",
+                "Argument %s provided is not a directory. "
+                "Please provide a directory to monitor.\n",
                 argv[1]);
             exit(1);
+        }
+
+        // Remove trailing slash from filepath if present
+        char directory[PATH_MAX];
+        strcpy(directory, argv[1]);
+        if (directory[strlen(directory) - 1] == '/')
+        {
+            directory[strlen(directory) - 1] = 0;
         }
 
         // Initialize inotify API
@@ -41,15 +48,15 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
-        // Add user-provided file/directory to inotify watchlist
+        // Add user-provided directory to inotify watchlist
         int events_mask = IN_ACCESS | IN_CREATE | IN_CLOSE_WRITE | IN_DELETE;
-        if ((inotify_add_watch(notify_fd, argv[1], events_mask)) < 0)
+        if ((inotify_add_watch(notify_fd, directory, events_mask)) < 0)
         {
             perror("Failed to watch directory for changes");
             exit(1);
         }
 
-        // Enter infinite loop, continuously reading from inotify file
+        // Enter infinite loop, continuously reading from inotify event queue
         char event_buffer[BUFFER_SIZE];
         struct inotify_event *event;
         while (1)
@@ -64,19 +71,19 @@ int main(int argc, char *argv[])
                 // Categorize event and print output to stdout accordingly
                 if (event->mask & IN_ACCESS)
                 {
-                    printf("File /tmp/%s was accessed.\n", event->name);
+                    printf("File %s/%s was accessed.\n", directory, event->name);
                 }
                 if (event->mask & IN_CREATE)
                 {
-                    printf("File /tmp/%s was created.\n", event->name);
+                    printf("File %s/%s was created.\n", directory, event->name);
                 }
                 if (event->mask & IN_CLOSE_WRITE)
                 {
-                    printf("File /tmp/%s was modified.\n", event->name);
+                    printf("File %s/%s was modified.\n", directory, event->name);
                 }
                 if (event->mask & IN_DELETE)
                 {
-                    printf("File /tmp/%s was deleted.\n", event->name);
+                    printf("File %s/%s was deleted.\n", directory, event->name);
                 }
             }
         }
