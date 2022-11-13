@@ -36,8 +36,6 @@ int main(int argc, char *argv[])
         case '?':
             printf("Usage: %s [-a] [-b b_argument] [-c c_argument]\n", argv[0]);
             exit(1);
-        default:
-            abort();
         }
     }
 
